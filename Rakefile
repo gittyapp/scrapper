@@ -28,6 +28,17 @@ class Repository
   end
 end
 
+class User
+  attr_accessor :login, :name, :avatar, :repo
+
+  def initialize(login, name, avatar, repo)
+    @login = login
+    @name = name
+    @avatar = avatar
+    @repo = repo
+  end  
+end
+
 def open(url)
   Net::HTTP.get(URI.parse(url))
 end
@@ -39,7 +50,7 @@ def run_scraper
     language.downcase!
     puts "Scraping: #{language}"
 
-    repositories = scrape(language)
+    repositories = scrape_repos(language)
 
     repo_json = Jbuilder.encode do |json|
       json.repositories repositories.each do |repo|
@@ -51,11 +62,28 @@ def run_scraper
       end
     end
 
+    users = scrape_users(language)
+
+    user_json = Jbuilder.encode do |json|
+      json.users users.each do |user|
+        json.login user.login
+        json.name user.name
+        json.avatar user.avatar
+
+        json.repository do
+          json.owner user.repo.owner
+          json.name user.repo.name
+          json.description user.repo.description
+        end
+      end
+    end
+
     if language == ''
       language = 'all'
     end
 
-    upload_to_s3(language, repo_json)
+    upload_to_s3(language, repo_json, 'repo')
+    upload_to_s3(language, user_json, 'user')
   end
 
   puts 'All Done :D'
@@ -67,7 +95,7 @@ def write_string_to_file(name, my_string)
   json_file.close
 end
 
-def upload_to_s3(name, json)
+def upload_to_s3(name, json, prefix)
   puts 'Updating json file...'
 
   access_key = ENV['S3_ACCESS_KEY']
@@ -79,15 +107,15 @@ def upload_to_s3(name, json)
 
   bucket = s3.buckets['gitty']
 
-  json_file_name = "trending/#{name}.json"
+  json_file_name = "trending/#{prefix}/#{name}.json"
   
   json_file = bucket.objects[json_file_name]
 
-  puts 'Saving Tablet Config...'
+  puts "Saving JSON File #{json_file_name}..."
   json_file.write(json, :acl => :public_read, :content_type => 'application/json')
 end
 
-def scrape(language)
+def scrape_repos(language)
   page_content = open("https://github.com/trending?l=#{language}")
 
   page = Nokogiri::HTML( page_content )
@@ -119,6 +147,32 @@ def scrape(language)
   end
 
   repositories
+end
+
+def scrape_users(language)
+  page_content = open("https://github.com/trending/developers?l=#{language}")
+
+  page = Nokogiri::HTML( page_content )
+
+  page_users = page.css('li.user-leaderboard-list-item')
+
+  users = []
+
+  page_users.each do |user|
+    main_info = user.css('div.leaderboard-list-content')
+    user_login = main_info.css('h2.user-leaderboard-list-name a')[0]['href'].gsub("/", "")
+    user_name = main_info.css('span.full-name').text.gsub("(", "").gsub(")", "")
+    user_avatar = user.css('img.leaderboard-gravatar')[0]['src']
+    repo_description = main_info.css('span.repo-description').text
+    repo_name = main_info.css('span.repo').text
+    
+    repo = Repository.new(user_login, repo_name, repo_description, '', user_avatar)
+    user = User.new(user_login, user_name, user_avatar, repo)
+
+    users << user
+  end
+
+  users
 end
 
 task :run do
