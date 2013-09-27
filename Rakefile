@@ -7,13 +7,14 @@ require 'net/http'
 require 'uri'
 
 class Repository
-  attr_accessor :owner, :name, :description, :language
+  attr_accessor :owner, :name, :description, :language, :avatar
 
-  def initialize(owner, name, description, language)
+  def initialize(owner, name, description, language, avatar)
     @owner = owner
     @name = name
     @description = description
     @language = language
+    @avatar = avatar
   end
 
   def to_builder
@@ -22,6 +23,7 @@ class Repository
       repo.name name
       repo.description description
       repo.language language
+      repo.avatar avatar
     end
   end
 end
@@ -45,6 +47,7 @@ def run_scraper
         json.name repo.name
         json.description repo.description
         json.language repo.language
+        json.avatar repo.avatar
       end
     end
 
@@ -99,8 +102,18 @@ def scrape(language)
     repo_name = main_info.css('strong').text
     repo_description = repo.css('p.repo-leaderboard-description').text
     repo_language = repo.css('span.title-meta').text
+    repo_contribs = repo.css('div.repo-leaderboard-contributors a img')
+    repo_avatar = ''
 
-    repository = Repository.new(repo_owner, repo_name, repo_description, repo_language)
+    repo_contribs.each do |contrib|
+      if contrib['title'] == repo_owner
+        repo_avatar = contrib['src']
+        repo_avatar = repo_avatar.gsub("s=140", "s=80")
+        break
+      end
+    end
+
+    repository = Repository.new(repo_owner, repo_name, repo_description, repo_language, repo_avatar)
 
     repositories << repository
   end
