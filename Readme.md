@@ -1,0 +1,1 @@
+This ruby file will scrape the GitHub trending page for each language and build a json file to represent the data.
