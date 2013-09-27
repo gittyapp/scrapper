@@ -1,6 +1,6 @@
 require 'rubygems'
 
-require 'aws'
+require 'aws-sdk'
 require 'jbuilder'
 require 'nokogiri'
 require 'net/http'
@@ -66,9 +66,13 @@ end
 
 def upload_to_s3(name, json)
   puts 'Updating json file...'
+
+  access_key = ENV['S3_ACCESS_KEY']
+  secret_key = ENV['S3_SECRET_KEY']
+
   s3 = AWS::S3.new(
-  :access_key_id => 'S3_ACCESS_KEY',
-  :secret_access_key => 'ENV[S3_SECRET_KEY')
+  :access_key_id => access_key,
+  :secret_access_key => secret_key)
 
   bucket = s3.buckets['gitty']
 

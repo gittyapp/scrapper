@@ -8,15 +8,15 @@ GEM
       thread_safe (~> 0.1)
       tzinfo (~> 0.3.37)
     atomic (1.1.14)
-    aws (2.9.1)
-      http_connection
-      uuidtools
-      xml-simple
-    http_connection (1.4.4)
+    aws-sdk (1.11.0)
+      json (~> 1.4)
+      nokogiri (>= 1.4.4)
+      uuidtools (~> 2.1)
     i18n (0.6.5)
     jbuilder (1.5.1)
       activesupport (>= 3.0.0)
       multi_json (>= 1.2.0)
+    json (1.8.0)
     mini_portile (0.5.1)
     minitest (4.7.5)
     multi_json (1.8.0)
@@ -26,12 +26,11 @@ GEM
       atomic
     tzinfo (0.3.37)
     uuidtools (2.1.4)
-    xml-simple (1.1.2)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
-  aws
+  aws-sdk
   jbuilder
   nokogiri

@@ -1,5 +1,5 @@
 source 'http://rubygems.org'
 
-gem 'aws'
+gem 'aws-sdk'
 gem 'jbuilder'
 gem 'nokogiri'
