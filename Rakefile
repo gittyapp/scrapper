@@ -8,14 +8,16 @@ require 'octokit'
 require 'uri'
 
 class Repository
-  attr_accessor :owner, :name, :description, :language, :avatar
+  attr_accessor :owner, :name, :description, :language, :avatar, :stars, :forks
 
-  def initialize(owner, name, description, language, avatar)
+  def initialize(owner, name, description, language, avatar, stars, forks)
     @owner = owner
     @name = name
     @description = description
     @language = language
     @avatar = avatar
+    @stars = stars
+    @forks = forks
   end
 
   def to_builder
@@ -25,6 +27,8 @@ class Repository
       repo.description description
       repo.language language
       repo.avatar avatar
+      repo.stars stars
+      repo.forks forks
     end
   end
 end
@@ -64,6 +68,8 @@ def run_scraper
         json.description repo.description
         json.language repo.language
         json.avatar repo.avatar
+        json.watchers repo.stars
+        json.forks repo.forks
       end
     end
 
@@ -137,18 +143,14 @@ def scrape_repos(language, client)
     repo_language = repo.css('span.title-meta').text
     repo_contribs = repo.css('div.repo-leaderboard-contributors a img')
 
-    gh_repo = client.user repo_owner    
-    repo_avatar = gh_repo.avatar_url
+    gh_user = client.user repo_owner
+    repo_avatar = gh_user.avatar_url
 
-    repo_contribs.each do |contrib|
-      if contrib['title'] == repo_owner
-        repo_avatar = contrib['src']
-        repo_avatar = repo_avatar.gsub("s=140", "s=80")
-        break
-      end
-    end
+    gh_repo = client.repo "#{repo_owner}/#{repo_name}"
+    repo_stars = gh_repo.watchers
+    repo_forks = gh_repo.forks
 
-    repository = Repository.new(repo_owner, repo_name, repo_description, repo_language, repo_avatar)
+    repository = Repository.new(repo_owner, repo_name, repo_description, repo_language, repo_avatar, repo_stars, repo_forks)
 
     repositories << repository
   end
@@ -173,7 +175,7 @@ def scrape_users(language)
     repo_description = main_info.css('span.repo-description').text
     repo_name = main_info.css('span.repo').text
     
-    repo = Repository.new(user_login, repo_name, repo_description, '', user_avatar)
+    repo = Repository.new(user_login, repo_name, repo_description, '', user_avatar, '', '')
     user = User.new(user_login, user_name, user_avatar, repo)
 
     users << user
