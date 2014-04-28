@@ -4,6 +4,7 @@ require 'aws-sdk'
 require 'jbuilder'
 require 'nokogiri'
 require 'net/http'
+require 'octokit'
 require 'uri'
 
 class Repository
@@ -46,11 +47,15 @@ end
 def run_scraper
   languages = ['', 'ABAP','ActionScript','Ada','Apex','AppleScript','Arc','Arduino','ASP','Assembly','Augeas','AutoHotkey','Awk','Boo','Bro','C','csharp','C++','Ceylon','CLIPS','Clojure','COBOL','CoffeeScript','ColdFusion','Common-Lisp','Coq','CSS','D','Dart','DCPU-16-ASM','DOT','Dylan','eC','Ecl','Eiffel','Elixir','Emacs-Lisp','Erlang','F#','Factor','Fancy','Fantom','Forth','FORTRAN','Go','Gosu','Groovy','Haskell','Haxe','Io','Ioke','Java','JavaScript','Julia','Kotlin','Lasso','LiveScript','Logos','Logtalk','Lua','M','Matlab','Max','Mirah','Monkey','MoonScript','Nemerle','Nimrod','Nu','Objective-C','Objective-J','OCaml','Omgrofl','ooc','Opa','OpenEdge-ABL','Parrot','Pascal','Perl','PHP','Pike','PogoScript','PowerShell','Processing','Prolog','Puppet','Pure-Data','Python','R','Racket','Ragel-in-Ruby-Host','Rebol','Rouge','Ruby','Rust','Scala','Scheme','Scilab','Self','Shell','Slash','Smalltalk','Squirrel','Standard-ML','SuperCollider','Tcl','Turing','TXL','TypeScript','Vala','Verilog','VHDL','VimL','Visual-Basic','Volt','wisp','XC','XML','XProc','XQuery','XSLT','Xtend']
 
+  access_token = ENV['GH_ACCESS_TOKEN']
+
+  client = Octokit::Client.new(:access_token => access_token)
+
   languages.each do |language|
     language.downcase!
     puts "Scraping: #{language}"
 
-    repositories = scrape_repos(language)
+    repositories = scrape_repos(language, client)
 
     repo_json = Jbuilder.encode do |json|
       json.repositories repositories.each do |repo|
@@ -115,7 +120,7 @@ def upload_to_s3(name, json, prefix)
   json_file.write(json, :acl => :public_read, :content_type => 'application/json')
 end
 
-def scrape_repos(language)
+def scrape_repos(language, client)
   page_content = open("https://github.com/trending?l=#{language}")
 
   page = Nokogiri::HTML( page_content )
@@ -131,7 +136,9 @@ def scrape_repos(language)
     repo_description = repo.css('p.repo-leaderboard-description').text
     repo_language = repo.css('span.title-meta').text
     repo_contribs = repo.css('div.repo-leaderboard-contributors a img')
-    repo_avatar = ''
+
+    gh_repo = client.user repo_owner    
+    repo_avatar = gh_repo.avatar_url
 
     repo_contribs.each do |contrib|
       if contrib['title'] == repo_owner
