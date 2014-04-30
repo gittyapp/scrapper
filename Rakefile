@@ -123,7 +123,28 @@ def upload_to_s3(name, json, prefix)
   json_file = bucket.objects[json_file_name]
 
   puts "Saving JSON File #{json_file_name}..."
-  json_file.write(json, :acl => :public_read, :content_type => 'application/json')
+
+  # Dirty dirty dirty(S3Bug)..
+  begin
+    json_file.write(json, :acl => :public_read, :content_type => 'application/json')
+  rescue Exception => e
+    puts "Upload Failed once.."
+
+    begin
+      json_file.write(json, :acl => :public_read, :content_type => 'application/json')
+    rescue Exception => e
+      puts "Upload Failed twice.."
+
+      begin
+        json_file.write(json, :acl => :public_read, :content_type => 'application/json')
+      rescue Exception => e
+        puts "Upload Failed three times.."
+
+        json_file.write(json, :acl => :public_read, :content_type => 'application/json')
+      end
+    end
+  end
+
 end
 
 def scrape_repos(language, client)
