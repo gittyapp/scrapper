@@ -148,11 +148,9 @@ def scrape_repos(language, client)
 
     stars_css = repo.css('span.collection-stat')[0]
     repo_stars = stars_css.text unless stars_css == nil
-    puts repo_stars
 
     forks_css = repo.css('span.collection-stat')[1]
     repo_forks = forks_css.text unless forks_css == nil
-    puts repo_forks
 
     repository = Repository.new(repo_owner, repo_name, repo_description, repo_language, repo_avatar, repo_stars, repo_forks)
 
