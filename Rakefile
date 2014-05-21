@@ -53,6 +53,15 @@ def run_scraper(since)
 
   access_token = ENV['GH_ACCESS_TOKEN']
 
+  if (since == 'weekly')
+    access_token = ENV['GH_ACCESS_TOKEN_1']
+  end
+
+  if (since == 'monthly')
+    access_token = ENV['GH_ACCESS_TOKEN_2']
+    puts 'monthly'
+  end
+
   client = Octokit::Client.new(:access_token => access_token)
 
   languages.each do |language|
