@@ -48,7 +48,7 @@ def open(url)
   Net::HTTP.get(URI.parse(url))
 end
 
-def run_scraper
+def run_scraper(since)
   languages = ['', 'ABAP','ActionScript','Ada','Apex','AppleScript','Arc','Arduino','ASP','Assembly','Augeas','AutoHotkey','Awk','Boo','Bro','C','csharp','C++','Ceylon','CLIPS','Clojure','COBOL','CoffeeScript','ColdFusion','Common-Lisp','Coq','CSS','D','Dart','DCPU-16-ASM','DOT','Dylan','eC','Ecl','Eiffel','Elixir','Emacs-Lisp','Erlang','F#','Factor','Fancy','Fantom','Forth','FORTRAN','Go','Gosu','Groovy','Haskell','Haxe','Io','Ioke','Java','JavaScript','Julia','Kotlin','Lasso','LiveScript','Logos','Logtalk','Lua','M','Matlab','Max','Mirah','Monkey','MoonScript','Nemerle','Nimrod','Nu','Objective-C','Objective-J','OCaml','Omgrofl','ooc','Opa','OpenEdge-ABL','Parrot','Pascal','Perl','PHP','Pike','PogoScript','PowerShell','Processing','Prolog','Puppet','Pure-Data','Python','R','Racket','Ragel-in-Ruby-Host','Rebol','Rouge','Ruby','Rust','Scala','Scheme','Scilab','Self','Shell','Slash','Smalltalk','Squirrel','Standard-ML','SuperCollider','Tcl','Turing','TXL','TypeScript','Vala','Verilog','VHDL','VimL','Visual-Basic','Volt','wisp','XC','XML','XProc','XQuery','XSLT','Xtend']
 
   access_token = ENV['GH_ACCESS_TOKEN']
@@ -59,7 +59,7 @@ def run_scraper
     language.downcase!
     puts "Scraping: #{language}"
 
-    repositories = scrape_repos(language, client)
+    repositories = scrape_repos(language, client, since)
 
     repo_json = Jbuilder.encode do |json|
       json.repositories repositories.each do |repo|
@@ -73,7 +73,7 @@ def run_scraper
       end
     end
 
-    users = scrape_users(language)
+    users = scrape_users(language, since)
 
     user_json = Jbuilder.encode do |json|
       json.users users.each do |user|
@@ -93,8 +93,8 @@ def run_scraper
       language = 'all'
     end
 
-    upload_to_s3(language, repo_json, 'repo')
-    upload_to_s3(language, user_json, 'user')
+    upload_to_s3(language, repo_json, 'repo', since)
+    upload_to_s3(language, user_json, 'user', since)
   end
 
   puts 'All Done :D'
@@ -106,7 +106,7 @@ def write_string_to_file(name, my_string)
   json_file.close
 end
 
-def upload_to_s3(name, json, prefix)
+def upload_to_s3(name, json, prefix, since)
   puts 'Updating json file...'
 
   access_key = ENV['S3_ACCESS_KEY']
@@ -119,6 +119,10 @@ def upload_to_s3(name, json, prefix)
   bucket = s3.buckets['gitty']
 
   json_file_name = "trending/#{prefix}/#{name}.json"
+
+  if since != 'daily'
+    json_file_name = "trending/#{prefix}/#{name}-#{since}.json"
+  end
   
   json_file = bucket.objects[json_file_name]
 
@@ -147,8 +151,8 @@ def upload_to_s3(name, json, prefix)
 
 end
 
-def scrape_repos(language, client)
-  page_content = open("https://github.com/trending?l=#{language}")
+def scrape_repos(language, client, since)
+  page_content = open("https://github.com/trending?l=#{language}&since=#{since}")
 
   page = Nokogiri::HTML( page_content )
 
@@ -181,8 +185,8 @@ def scrape_repos(language, client)
   repositories
 end
 
-def scrape_users(language)
-  page_content = open("https://github.com/trending/developers?l=#{language}")
+def scrape_users(language, since)
+  page_content = open("https://github.com/trending/developers?l=#{language}&since=#{since}")
 
   page = Nokogiri::HTML( page_content )
 
@@ -208,5 +212,13 @@ def scrape_users(language)
 end
 
 task :run do
-  run_scraper
+  run_scraper('daily')
+end
+
+task :weekly do
+  run_scraper('weekly')
+end
+
+task :monthly do
+  run_scraper('monthly')
 end
