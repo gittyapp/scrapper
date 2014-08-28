@@ -165,17 +165,18 @@ def scrape_repos(language, client, since)
 
   page = Nokogiri::HTML( page_content )
 
-  repos = page.css('li.repo-leaderboard-list-item')
+  repos = page.css('li.repo-list-item')
 
   repositories = []
 
   repos.each do |repo|
-    main_info = repo.css('a.repository-name')
-    repo_owner = main_info.css('span.owner-name').text
-    repo_name = main_info.css('strong').text
-    repo_description = repo.css('p.repo-leaderboard-description').text
-    repo_language = repo.css('span.title-meta').text
-    repo_contribs = repo.css('div.repo-leaderboard-contributors a img')
+    main_info = repo.css('h3.repo-list-name')
+    repo_owner = main_info.css('span.prefix').text
+    repo_name = main_info.css('h3.repo-list-name a').text
+    puts repo_name
+    repo_description = repo.css('p.repo-list-description').text
+    repo_language = repo.css('p.repo-list-meta').text
+    repo_contribs = repo.css('p.repo-list-meta a img')
 
     gh_user = client.user repo_owner
     repo_avatar = gh_user.avatar_url
