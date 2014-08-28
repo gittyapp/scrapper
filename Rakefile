@@ -170,7 +170,7 @@ def scrape_repos(language, client, since)
   repositories = []
 
   repos.each do |repo|
-    main_info = repo.css('h3.repo-list-name a')[0]['href']
+    main_info = repo.css('h3.repo-list-name a')[0]['href'].split('/')
     repo_owner = main_info[1]
     repo_name = main_info[3]
     repo_description = repo.css('p.repo-list-description').text
