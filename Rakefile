@@ -174,14 +174,14 @@ def scrape_repos(language, client, since)
     repo_owner = main_info[1]
     repo_name = main_info[2]
     repo_description = repo.css('p.repo-list-description').text.gsub( / *\n+/, "" )
-    repo_meta = repo.css('p.repo-list-meta').text.gsub( / *\n+/, "" ).gsub(' ', '').split('â€¢')
+    repo_meta = repo.css('p.repo-list-meta').text.gsub( / *\n+/, "" ).split('•')
     repo_language = repo_meta[0]
     repo_contribs = repo.css('p.repo-list-meta a img')
 
     gh_user = client.user repo_owner
     repo_avatar = gh_user.avatar_url
 
-    stars_css = repo.css('span.collection-stat')[0]
+    stars_css = repo_meta[1].split(' ')[0]
     repo_stars = stars_css.text unless stars_css == nil
 
     forks_css = repo.css('span.collection-stat')[1]
