@@ -175,7 +175,7 @@ def scrape_repos(language, client, since)
     repo_name = main_info[2]
     repo_description = repo.css('p.repo-list-description').text.gsub( / *\n+/, "" )
     repo_meta = repo.css('p.repo-list-meta').text.gsub( / *\n+/, "" ).split('•')
-    repo_language = repo_meta[0]
+    repo_language = repo_meta[0].gsub(' ', '')
     repo_contribs = repo.css('p.repo-list-meta a img')
 
     gh_user = client.user repo_owner
