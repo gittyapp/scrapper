@@ -182,7 +182,7 @@ def scrape_repos(language, client, since)
     repo_avatar = gh_user.avatar_url
 
     stars_css = repo_meta[1].split(' ')[0]
-    repo_stars = stars_css.text unless stars_css == nil
+    repo_stars = stars_css unless stars_css == nil
 
     forks_css = repo.css('span.collection-stat')[1]
     repo_forks = forks_css.text unless forks_css == nil
