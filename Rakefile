@@ -209,8 +209,11 @@ def scrape_users(language, since)
     user_login = main_info.css('h2.user-leaderboard-list-name a')[0]['href'].gsub("/", "")
     user_name = main_info.css('span.full-name').text.gsub("(", "").gsub(")", "")
     user_avatar = user.css('img.leaderboard-gravatar')[0]['src']
-    repo_description = main_info.css('span.repo-description').text
-    repo_name = main_info.css('span.repo').text
+
+    repo_span = main_info.css('span.repo-snipit-name')
+
+    repo_description = repo_span.css('span.repo-snipit-description').text
+    repo_name = repo_span.css('span.repo').text
     
     repo = Repository.new(user_login, repo_name, repo_description, '', user_avatar, '', '')
     user = User.new(user_login, user_name, user_avatar, repo)
